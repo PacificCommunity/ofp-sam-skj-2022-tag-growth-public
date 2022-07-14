@@ -1,0 +1,62 @@
+\documentclass[fleqn]{article}
+\usepackage{datetime}\newdateformat{mydate}{\THEDAY~\monthname~\THEYEAR}\mydate
+\usepackage[a4paper,height=23cm]{geometry}
+\usepackage{parskip}
+\usepackage{color}
+\usepackage[hidelinks,linktoc=all,pdfpagemode=None]{hyperref}
+\begin{document}
+
+\title{Variance treatment in the GCM model}
+\author{Arni Magnusson}
+\maketitle
+
+\section*{Likelihood}
+
+In the GCM model (\textcolor[rgb]{0,0.1,0.5}%
+{\href{https://doi.org/10.1007/s00227-018-3336-9}{Maunder et al. 2018}}),
+$\sigma$ is used in the calculation of log-likelihoods in a traditional manner:
+
+\begin{verbatim}
+  dnorm(y, mu, sigma, true)
+\end{verbatim}
+
+\section*{Unequal variances}
+
+In the calculation of $\sigma$, it increases with the size of fish:
+
+\begin{displaymath}
+  \sigma_i \;=\; \sigma_a \;+\; (\sigma_b + \sigma_\mathrm{ME})\times \hat L_i
+\end{displaymath}
+
+\section*{Model settings}
+
+In the default model settings, some $\sigma$ coefficients are fixed and others
+estimated:
+
+\begin{itemize}
+  \item[] $\sigma_a$ is fixed near zero ($10^{-7}$)
+  \item[] $\sigma_b$ is estimated
+  \item[] $\sigma_\mathrm{ME}$ is fixed at 0.0222
+\end{itemize}
+
+\section*{Source code}
+
+\begin{verbatim}
+  PARAMETER(ln_sd_a);
+  PARAMETER(ln_sd_b);
+  PARAMETER(ln_sd_MEb);
+
+  sd_a = exp(ln_sd_a);
+  sd_b = exp(ln_sd_b);
+  sd_MEb = exp(ln_sd_MEb);
+
+  Lrel_sd(i) = sd_a + sd_b * Lrel_pred(i);
+  Lrel_MEsd(i) = sd_MEb * Lrel_pred(i);
+
+  Lrel_nll(i) = -dnorm(Lrel_obs(i),
+                       Lrel_pred(i),
+                       Lrel_sd(i) + Lrel_MEsd(i),
+                       true);
+\end{verbatim}
+
+\end{document}

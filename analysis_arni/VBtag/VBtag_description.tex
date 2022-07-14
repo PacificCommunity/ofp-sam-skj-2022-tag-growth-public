@@ -1,0 +1,126 @@
+\documentclass[fleqn]{article}
+\usepackage{datetime}\newdateformat{mydate}{\THEDAY~\monthname~\THEYEAR}\mydate
+\usepackage[a4paper,height=23cm]{geometry}
+\usepackage{parskip}
+\usepackage{color}
+\usepackage[hidelinks,linktoc=all,pdfpagemode=None]{hyperref}
+\begin{document}
+
+\title{Description of the VBtag model}
+\author{Arni Magnusson}
+\date{8 July 2022}
+\maketitle
+
+\section*{Growth}
+
+Growth follows a traditional von Bertalanffy form:
+
+\begin{displaymath}
+  \hat L_i \;=\; L_\infty \Big(1-e^{-k(t_i-t_0)}\Big)
+\end{displaymath}
+
+\section*{Likelihood}
+
+A traditional normal likelihood is used:
+
+\begin{verbatim}
+  dnorm(y, mu, sigma)
+\end{verbatim}
+
+\vspace{1ex}
+
+The model has three likelihood components, baesd on the fit to observed lengths
+at tag release, lengths at tag recaptures, and lengths from the otolith data:
+
+\begin{displaymath}
+  f \;=\; \log L_\mathrm{rel}
+  \;+\; \log L_\mathrm{rec}
+  \;+\; \log L_\mathrm{oto}
+\end{displaymath}
+
+\section*{Unequal variances}
+
+The variability in length at age ($\sigma$) varies with age:
+
+\begin{displaymath}
+  \log\sigma_i \;=\; \mathrm{intercept} \;+\; \mathrm{slope} \times t_i
+\end{displaymath}
+
+\section*{Model parameters}
+
+\begin{tabular}{ll}
+  $L_\infty$, $k$, $t_0$ & growth curve coefficients\\[1ex]
+  $\sigma_a$, $\sigma_b$ & sd(length) at ages $a$ and $b$\\[1ex]
+  age & vector of estimated age at release for all tagged fish\\[1ex]
+\end{tabular}
+
+Parameters are estimating using traditional MLE, except the sigma parameters are
+fixed (estimated iteratively and externally).
+
+\section*{Input data}
+
+\begin{verbatim}
+  DATA_VECTOR(Lrel);        // length at release (tags)
+  DATA_VECTOR(Lrec);        // length at recapture (tags)
+  DATA_VECTOR(liberty);     // time at liberty (tags)
+  DATA_VECTOR(Aoto);        // age (otoliths)
+  DATA_VECTOR(Loto);        // length (otoliths)
+  DATA_SCALAR(a);           // younger age where sd(length) is sigma_a
+  DATA_SCALAR(b);           // older age where sd(length) is sigma_b
+\end{verbatim}
+
+\section*{Source code}
+
+\textcolor[rgb]{0,0.1,0.5}%
+{\href{https://github.com/PacificCommunity/ofp-sam-skj-tag-growth/blob/main/bootstrap/initial/software}%
+  {Link to GitHub}} (requires GitHub login).
+
+\section*{Background and model variations}
+
+\subsection*{GCM}
+
+SPC is exploring various methods to estimate growth parameters for the 2022
+stock assessment of skipjack tuna. As part of this exploration, there was
+interest in fitting a growth cessation model (GCM), described in
+\textcolor[rgb]{0,0.1,0.5}%
+{\href{https://doi.org/10.1007/s00227-018-3336-9}{Maunder et al. (2018)}}.
+
+Mark Maunder shared the GCM model code with the SPC growth modelling team via
+email (2022-05-28). This model is written in Template Model Builder (TMB) and
+estimates ages from tagging data, based on the observed length increase between
+the date of release and date of recapture.
+
+\begin{tabular}{ll}
+  $L_\infty$, $k$, $r_\mathrm{max}$ & growth curve coefficients\\[1ex]
+  $A_\mathrm{fix}$, $L_\mathrm{fix}$ & additional growth curve
+                                       coefficients\\[1ex]
+  $\sigma_a$, $\sigma_b$, $\sigma_\mathrm{MEb}$ & sd(length) coefficients\\[1ex]
+  age & vector of estimated age at release for all tagged fish\\[1ex]
+\end{tabular}
+
+\subsection*{VBtag}
+
+The SPC data do not show clear signs of growth cessation, so the SPC team
+decided to write a similar model that uses a traditional von Bertalanffy model.
+
+The VBtag model is simpler than the GCM model, describing the growth curve with
+3 parameters ($L_\infty$, $k$, $t_0$) instead of 5 parameters ($L_\infty$, $k$,
+$r_\mathrm{max}$, $A_\mathrm{fix}$, $L_\mathrm{fix}$).
+
+The main difference between VBtag and a `plain vanilla' von Bertalanffy model is
+that VBtag estimates the release age of tagged fish, using the same approach as
+the GCM model. The parameter vector of estimated ages uses half of the degrees
+of freedom from the tagging data, where each tagged fish provides two observed
+values to be fitted by the model: length at release and length at recovery.
+
+\subsection*{GCM\_oto}
+
+The GCM\_oto model is the same as the GCM model, with the addition of including
+the otolith data. This introduces no additional parameters.
+
+\subsection*{VBtag\_oto}
+
+The VBtag\_oto model is the same as the VBtag model, with the addition of
+including the otolith data. This introduces no additional parameters.
+
+\end{document}
