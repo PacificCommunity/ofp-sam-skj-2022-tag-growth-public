@@ -1,4 +1,4 @@
-# Analysis of SKJ growth from tags and otoliths
+# Analysis of skipjack tuna (SKJ) growth from tags and otoliths
 
 This public repository contains R scripts and TMB models used in the analysis of
 skipjack tuna growth from tagging data and otoliths.
